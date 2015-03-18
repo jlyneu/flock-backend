@@ -8,7 +8,7 @@ app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
 
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:63342/");
+  res.header("Access-Control-Allow-Origin", "http://localhost:63342/", "http://zachbachiri.com/Flock/", "http://northeastern.edu/flock/");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
