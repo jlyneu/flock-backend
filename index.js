@@ -18,7 +18,7 @@ var twitterAPI = require('node-twitter-api');
 var twitter = new twitterAPI({
     consumerKey: 'pEaf5TgKTpz0Tf1M9uyqZSysQ',
     consumerSecret: 'dTV7OuEkgauN8syVrOT5T9XzK8CnXpSvjMEELlZshz1aqdsAVW',
-    callback: 'http://zachbachiri.com/Flock/'
+    callback: 'http://zachbachiri.com/Flock/#/redirect'
 });
 
 // keys: session IDs -> values: {accessToken:..., accessTokenSecret:...}
