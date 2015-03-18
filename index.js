@@ -44,31 +44,32 @@ app.get('/accessToken', function(request, response) {
     var oauth_verifier = request.query.oauth_verifier;
     
     twitter.getAccessToken(requestToken, requestTokenSecret, oauth_verifier, function(error, accessToken, accessTokenSecret, results) {
-    if (error) {
-        console.log(error);
-    } else {
-        //store accessToken and accessTokenSecret somewhere (associated to the user)
-        //Step 4: Verify Credentials belongs here
-        twitter.verifyCredentials(accessToken, accessTokenSecret, function(error, data, response) {
-            if (error) {
-                //something was wrong with either accessToken or accessTokenSecret
-                //start over with Step 1
-            } else {
-                //accessToken and accessTokenSecret can now be used to make api-calls (not yet implemented)
-                //data contains the user-data described in the official Twitter-API-docs
-                //you could e.g. display his screen_name
-                console.log(data);
-                console.log(response);
-                var accessInfo = {
-                                     'accessToken': accessToken,
-                                     'accessTokenSecret': accessTokenSecret
-                                 }
-				var sessionId = uuid.v4();
-				sessions[uuid.v4()] = accessInfo;
-                response.send({ 'sessionId': sessionId });
-            }
-        });
-    }
+        if (error) {
+            console.log(error);
+        } else {
+            //store accessToken and accessTokenSecret somewhere (associated to the user)
+            //Step 4: Verify Credentials belongs here
+            twitter.verifyCredentials(accessToken, accessTokenSecret, function(error, data, response) {
+                if (error) {
+                    //something was wrong with either accessToken or accessTokenSecret
+                    //start over with Step 1
+                } else {
+                    //accessToken and accessTokenSecret can now be used to make api-calls (not yet implemented)
+                    //data contains the user-data described in the official Twitter-API-docs
+                    //you could e.g. display his screen_name
+                    console.log(data);
+                    console.log(response);
+                    var accessInfo = {
+                                         'accessToken': accessToken,
+                                         'accessTokenSecret': accessTokenSecret
+                                     }
+				    var sessionId = uuid.v4();
+				    sessions[uuid.v4()] = accessInfo;
+                    response.send({ 'sessionId': sessionId });
+                }
+            });
+        }
+    });
 });
 
 app.get('/tweets', function(request, response) {
