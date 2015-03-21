@@ -17,7 +17,9 @@ app.use(function(req, res, next) {
   // can only set one allowed origin per response, therefore
   // check to see if origin of request is in origins list and
   // set header if so
-  for (origin in origins) {
+  var origin;
+  for (var i = 0; i < origins.length; i++) {
+      origin = origins[i]
       if (req.headers.origin.indexOf(origin) > -1){
           res.header("Access-Control-Allow-Origin", origin);
           break;
