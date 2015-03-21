@@ -14,7 +14,15 @@ app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
 
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", origins);
+  // can only set one allowed origin per response, therefore
+  // check to see if origin of request is in origins list and
+  // set header if so
+  for (origin in origins) {
+      if (req.headers.origin.indexOf(origin) > -1){
+          res.header("Access-Control-Allow-Origin", origin);
+          break;
+      }
+  }
   res.header("Access-Control-Allow-Methods", "GET");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
