@@ -51,8 +51,7 @@ app.get('/requestToken', function(request, response) {
             console.log(requestTokenSecret);
             console.log(results);
             //store token and tokenSecret somewhere, you'll need them later; redirect user
-            //response.redirect(302, twitter.getAuthUrl(requestToken));
-            response.redirect(302, 'http://www.google.com/');
+            response.redirect(302, twitter.getAuthUrl(requestToken));
         }
     });
 });
