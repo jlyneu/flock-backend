@@ -1,6 +1,12 @@
 var express = require('express');
 var app = express();
 
+// allowed origins
+var origins = ["http://localhost:63342/", 
+    "http://localhost:8000/", 
+    "http://zachbachiri.com", 
+    "http://northeastern.edu"];
+
 // imports library to create uuids used as session ids
 var uuid = require('node-uuid');
 
@@ -8,7 +14,7 @@ app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
 
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:63342/", "http://zachbachiri.com", "http://northeastern.edu");
+  res.header("Access-Control-Allow-Origin", origins);
   res.header("Access-Control-Allow-Methods", "GET");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
@@ -35,7 +41,8 @@ app.get('/requestToken', function(request, response) {
             console.log(requestTokenSecret);
             console.log(results);
             //store token and tokenSecret somewhere, you'll need them later; redirect user
-            response.redirect(302, twitter.getAuthUrl(requestToken));
+            //response.redirect(302, twitter.getAuthUrl(requestToken));
+            response.redirect(302, 'http://www.google.com/');
         }
     });
 });
