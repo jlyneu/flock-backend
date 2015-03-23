@@ -2,8 +2,8 @@ var express = require('express');
 var app = express();
 
 // allowed origins
-var origins = ["http://localhost:63342/", 
-    "http://localhost:8000/", 
+var origins = ["http://localhost:63342", 
+    "http://localhost:8000", 
     "http://zachbachiri.com", 
     "http://northeastern.edu"];
 
@@ -51,7 +51,7 @@ app.get('/requestToken', function(request, response) {
             console.log(requestTokenSecret);
             console.log(results);
             //store token and tokenSecret somewhere, you'll need them later; redirect user
-            response.redirect(302, twitter.getAuthUrl(requestToken));
+            response.send(twitter.getAuthUrl(requestToken));
         }
     });
 });
