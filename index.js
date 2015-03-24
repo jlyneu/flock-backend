@@ -82,11 +82,11 @@ app.get('/accessToken', function(request, response) {
                     //accessToken and accessTokenSecret can now be used to make api-calls (not yet implemented)
                     //data contains the user-data described in the official Twitter-API-docs
                     //you could e.g. display his screen_name
-                    console.log(data);
-                    console.log(results);
+                    console.log('accessToken: ' + accessToken);
+                    console.log('accessTokenSecret: ' + accessTokenSecret);
                     sess.accessToken = accessToken;
                     sess.accessTokenSecret = accessTokenSecret;
-                    response.status(200).end();
+                    response.send();
                 }
             });
         }
