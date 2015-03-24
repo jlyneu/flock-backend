@@ -83,7 +83,7 @@ app.get('/accessToken', function(request, response) {
                     //data contains the user-data described in the official Twitter-API-docs
                     //you could e.g. display his screen_name
                     console.log(data);
-                    console.log(response);
+                    console.log(results);
                     sess.accessToken = accessToken;
                     sess.accessTokenSecret = accessTokenSecret;
                     response.status(200).end();
@@ -100,8 +100,8 @@ app.get('/tweets', function(request, response) {
     
     twitter.search('tweets', 
         request.query, 
-        sessionInfo.accessToken,
-        sessionInfo.accessTokenSecret,
+        sess.accessToken,
+        sess.accessTokenSecret,
         function(error, data, twitterResponse){
             // TODO: return appropriate error if call fails
             console.log(data);
