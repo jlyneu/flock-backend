@@ -1,4 +1,5 @@
 var express = require('express');
+var session = require('express-session');
 var app = express();
 
 // allowed origins
@@ -30,6 +31,8 @@ app.use(function(req, res, next) {
   next();
 });
 
+app.use(session({secret: 'ssshhhhhh'}));
+
 var twitterAPI = require('node-twitter-api');
 var twitter = new twitterAPI({
     consumerKey: 'pEaf5TgKTpz0Tf1M9uyqZSysQ',
@@ -37,10 +40,10 @@ var twitter = new twitterAPI({
     callback: 'http://zachbachiri.com/Flock/#/redirect'
 });
 
-// keys: session IDs -> values: {accessToken:..., accessTokenSecret:...}
-var sessions = {}
+var sess;
 
 app.get('/requestToken', function(request, response) {
+    sess = request.session;
     twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results) {
         if (error) {
             console.log("Error getting OAuth request token : " + error);
@@ -50,6 +53,8 @@ app.get('/requestToken', function(request, response) {
             console.log(requestToken);
             console.log(requestTokenSecret);
             console.log(results);
+            sess.requestToken = requestToken;
+            sess.requestTokenSecret = requestTokenSecret;
             //store token and tokenSecret somewhere, you'll need them later; redirect user
             response.send(twitter.getAuthUrl(requestToken));
         }
@@ -59,6 +64,9 @@ app.get('/requestToken', function(request, response) {
 app.get('/accessToken', function(request, response) {
     var oauth_token = request.query.oauth_token;
     var oauth_verifier = request.query.oauth_verifier;
+    sess = request.session;
+    requestToken = sess.requestToken;
+    requestTokenSecret = sess.requestTokenSecret;
     
     twitter.getAccessToken(requestToken, requestTokenSecret, oauth_verifier, function(error, accessToken, accessTokenSecret, results) {
         if (error) {
@@ -76,13 +84,9 @@ app.get('/accessToken', function(request, response) {
                     //you could e.g. display his screen_name
                     console.log(data);
                     console.log(response);
-                    var accessInfo = {
-                                         'accessToken': accessToken,
-                                         'accessTokenSecret': accessTokenSecret
-                                     }
-				    var sessionId = uuid.v4();
-				    sessions[uuid.v4()] = accessInfo;
-                    response.send({ 'sessionId': sessionId });
+                    sess.accessToken = accessToken;
+                    sess.accessTokenSecret = accessTokenSecret;
+                    response.status(200).end();
                 }
             });
         }
@@ -92,10 +96,7 @@ app.get('/accessToken', function(request, response) {
 app.get('/tweets', function(request, response) {
 
 	// TODO: Return error if sessionId not included in request
-
-    var sessionId = request.query.sessionId;
-    var sessionInfo = sessions[sessionId];
-    delete request.query.sessionId;
+    sess = request.session;
     
     twitter.search('tweets', 
         request.query, 
@@ -103,6 +104,7 @@ app.get('/tweets', function(request, response) {
         sessionInfo.accessTokenSecret,
         function(error, data, twitterResponse){
             // TODO: return appropriate error if call fails
+            console.log(data);
             response.send(twitterResponse);
     	}
     );
