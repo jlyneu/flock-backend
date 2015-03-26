@@ -124,6 +124,7 @@ app.get('/accessToken', function(request, response) {
                     console.log('access token and secret set');
                     var user_info = {
                                         screen_name: result.screen_name,
+                                        profile_image_url: result.profile_image_url
                                         
                                     }
                     response.send('Access Token Retrieved');
