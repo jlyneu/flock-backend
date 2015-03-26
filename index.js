@@ -56,7 +56,7 @@ app.get('/checkSession', function(request, response) {
     var sessionId = request.query.session_id;
     console.log(request.query.session_id);
     console.log(sessions);
-    if (sessions[sessionId] && sessionId != flockSessionId){
+    if (sessions[sessionId] && sessionId != flockGuestSessionId){
         response.send("session found");
     } else {
         response.send("session not found");
