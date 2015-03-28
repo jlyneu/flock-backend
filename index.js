@@ -123,9 +123,8 @@ app.get('/accessToken', function(request, response) {
                     sess.accessTokenSecret = accessTokenSecret;
                     console.log('access token and secret set');
                     var user_info = {
-                                        screen_name: result.screen_name,
-                                        profile_image_url: result.profile_image_url
-                                        
+                                        screen_name: data.screen_name,
+                                        profile_image_url: data.profile_image_url
                                     }
                     response.send(user_info);
                 }
