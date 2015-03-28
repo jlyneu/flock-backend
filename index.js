@@ -127,7 +127,7 @@ app.get('/accessToken', function(request, response) {
                                         profile_image_url: result.profile_image_url
                                         
                                     }
-                    response.send('Access Token Retrieved');
+                    response.send(user_info);
                 }
             });
         }
