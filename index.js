@@ -88,7 +88,13 @@ app.get('/requestToken', function(request, response) {
 });
 
 app.get('/guestSession', function(request, response) {
-    response.send(flockGuestSessionId);
+    var guestData = {
+                        sessionId: flockGuestSessionId,
+                        screen_name: 'Guest',
+                        profile_image_url: 'http://abs.twimg.com/sticky/default_profile_images/default_profile_2_normal.png'
+                    }
+    response.send(guestData);
+    
 });
 
 app.get('/accessToken', function(request, response) {
