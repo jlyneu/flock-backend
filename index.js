@@ -23,6 +23,18 @@ sessions[flockGuestSessionId] = {
                                     accessTokenSecret: flockAccessSecret
                                 };
 
+var removeExpiredSessions = function(){
+    var session;
+    var currDate = new Date();
+    for (var sessId in sessions){
+        if (sessions.hasOwnProperty(sessId)){
+            var sess = sessions.sessId;
+            if (sess.hasOwnProperty('expireDate') && sess.expireDate - currDate < 0){
+                delete sessions.sessId;
+            }
+        }
+    }
+}
 
 app.use(function(req, res, next) {
   // can only set one allowed origin per response, therefore
@@ -74,9 +86,11 @@ app.get('/requestToken', function(request, response) {
             response.send("Call failed");
         } else {
             var sessionId = uuid.v4();
+            var currDate = new Date();
             sessions[sessionId] = {
                                       requestToken: requestToken,
-                                      requestTokenSecret: requestTokenSecret
+                                      requestTokenSecret: requestTokenSecret,
+                                      expireDate: currDate.setDate(currDate.getDate() + 1)
                                   };
             console.log(requestToken);
             console.log(requestTokenSecret);
@@ -144,6 +158,10 @@ app.get('/tweets', function(request, response) {
 	// TODO: Return error if sessionId not included in request
     var sessionId = request.query.session_id;
     var sess = sessions[sessionId];
+    if (!sess){
+        response.status(403);
+        response.send('Session expired');
+    }
     delete request.query.session_id;
     console.log('User session id: ' + sessionId);
     console.log(request.query);
@@ -154,11 +172,14 @@ app.get('/tweets', function(request, response) {
         sess.accessToken,
         sess.accessTokenSecret,
         function(error, data, twitterResponse){
+            console.log('TWITTERRESPONSE');
+            console.log(twitterResponse.headers);
+            var headers = twitterResponse.headers;
+            data.rate_limit = headers['x-rate-limit-limit'];
+            data.rate_limit_remaining = headers['x-rate-limit-remaining'];
+            data.rate_limit_reset = headers['x-rate-limit-reset'];
             // TODO: return appropriate error if call fails
-            //console.log(data);
-            //console.log(twitterResponse);
-            //console.log(twitterResponse);
-            console.log(twitterResponse);
+            console.log(data.rate_limit);
             response.send(data);
     	}
     );
