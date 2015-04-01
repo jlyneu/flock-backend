@@ -1,41 +1,38 @@
 var express = require('express');
 var app = express();
-// imports library to create uuids used as session ids
 var uuid = require('node-uuid');
 
-// allowed origins
+// List of allowed origins
 var origins = ["http://localhost:63342", 
     "http://localhost:8000", 
     "http://zachbachiri.com", 
     "http://northeastern.edu"];
     
-// Flock application token and token secret
+// Flock application information
 var flockConsumerKey = 'pEaf5TgKTpz0Tf1M9uyqZSysQ';
 var flockConsumerSecret = 'dTV7OuEkgauN8syVrOT5T9XzK8CnXpSvjMEELlZshz1aqdsAVW';
+
+// Default Guest access token and secret
 var flockAccessToken = '3029162194-GAze2tNS3Y4rPvIwvXZ1j813hZriXKWNpWjo3dd';
 var flockAccessSecret = 'ndsckIxbSpvDuTZGdmzP4pGac6fsBjfQAVkL5EoTzpd3M';
-var flockRedirectUrl = 'http://zachbachiri.com/Flock/#/redirect';
+
+// URL to redirect user from Twitter sign in page
+//var flockRedirectUrl = 'http://zachbachiri.com/Flock/#/redirect';
+var flockRedirectUrl = 'http://www.northeastern.edu/flock/#/redirect';
+
+// Default Guest session Id
 var flockGuestSessionId = '4cbd71d5-4594-4f53-950b-d27941afe77d';
 
+// Object to hold all session information
 var sessions = {}
+
+// Create default guest session object
 sessions[flockGuestSessionId] = {
                                     accessToken: flockAccessToken,
                                     accessTokenSecret: flockAccessSecret
                                 };
 
-var removeExpiredSessions = function(){
-    var session;
-    var currDate = new Date();
-    for (var sessId in sessions){
-        if (sessions.hasOwnProperty(sessId)){
-            var sess = sessions.sessId;
-            if (sess.hasOwnProperty('expireDate') && sess.expireDate - currDate < 0){
-                delete sessions.sessId;
-            }
-        }
-    }
-}
-
+// Set Cross Origin Resource Sharing headers 
 app.use(function(req, res, next) {
   // can only set one allowed origin per response, therefore
   // check to see if origin of request is in origins list and
@@ -53,9 +50,32 @@ app.use(function(req, res, next) {
   next();
 });
 
+// Set port number
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
 
+
+/*
+	@name:    removeExpiredSessions
+	@author:  Jimmy Ly
+	@created: Mar 28, 2015
+	@purpose: Search for sessions that have expired and remove them from 'sessions' object
+	@return:  void
+	@modhist:
+*/
+var removeExpiredSessions = function(){
+    var session;
+    var currDate = new Date();
+    for (var sessId in sessions){
+        if (sessions.hasOwnProperty(sessId)){
+            var sess = sessions.sessId;
+            // delete session object if expireDate has already past
+            if (sess.hasOwnProperty('expireDate') && sess.expireDate - currDate < 0){
+                delete sessions.sessId;
+            }
+        }
+    }
+}
 
 var twitterAPI = require('node-twitter-api');
 var twitter = new twitterAPI({
