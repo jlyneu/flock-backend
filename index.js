@@ -17,8 +17,8 @@ var flockAccessToken = '3029162194-GAze2tNS3Y4rPvIwvXZ1j813hZriXKWNpWjo3dd';
 var flockAccessSecret = 'ndsckIxbSpvDuTZGdmzP4pGac6fsBjfQAVkL5EoTzpd3M';
 
 // URL to redirect user from Twitter sign in page
-var flockRedirectUrl = 'http://zachbachiri.com/Flock/#/redirect';
-//var flockRedirectUrl = 'http://www.northeastern.edu/flock/#/redirect';
+//var flockRedirectUrl = 'http://zachbachiri.com/Flock/#/redirect';
+var flockRedirectUrl = 'http://www.northeastern.edu/flock/#/redirect';
 
 // Default Guest session Id
 var flockGuestSessionId = '4cbd71d5-4594-4f53-950b-d27941afe77d';
