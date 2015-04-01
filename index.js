@@ -3,10 +3,10 @@ var app = express();
 var uuid = require('node-uuid');
 
 // List of allowed origins
-var origins = ["http://localhost:63342", 
+var origins = ["http://www.northeastern.edu",
+    "http://localhost:63342", 
     "http://localhost:8000", 
-    "http://zachbachiri.com", 
-    "http://northeastern.edu"];
+    "http://zachbachiri.com"];
     
 // Flock application information
 var flockConsumerKey = 'pEaf5TgKTpz0Tf1M9uyqZSysQ';
