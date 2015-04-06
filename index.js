@@ -67,6 +67,7 @@ app.use(express.static(__dirname + '/public'));
 */
 var removeExpiredSessions = function(){
     var session;
+    // get current date and time to determine if a session has expired
     var currDate = new Date();
     for (var sessId in sessions){
         if (sessions.hasOwnProperty(sessId)){
@@ -79,6 +80,7 @@ var removeExpiredSessions = function(){
     }
 }
 
+// configure node-twitter-api with flock application information
 var twitterAPI = require('node-twitter-api');
 var twitter = new twitterAPI({
     consumerKey: flockConsumerKey,
@@ -105,7 +107,8 @@ app.get('/requestToken', function(request, response) {
         if (error) {
             console.log("Error getting OAuth request token : " + error);
             console.log(error);
-            response.send("Call failed");
+            response.status(502);
+            response.send("Twitter request token call failed");
         } else {
             var sessionId = uuid.v4();
             var currDate = new Date();
@@ -140,6 +143,10 @@ app.get('/accessToken', function(request, response) {
     console.log(sessions);
     console.log(sessionId);
     sess = sessions[sessionId]
+    if (!sess) {
+    	response.status(403);
+        response.send('Session expired');
+    }
     requestToken = sess.requestToken;
     requestTokenSecret = sess.requestTokenSecret;
     console.log('requestToken from sess: ' + requestToken);
