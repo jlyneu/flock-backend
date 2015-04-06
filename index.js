@@ -34,20 +34,22 @@ sessions[flockGuestSessionId] = {
 
 // Set Cross Origin Resource Sharing headers 
 app.use(function(req, res, next) {
-  // can only set one allowed origin per response, therefore
-  // check to see if origin of request is in origins list and
-  // set header if so
-  var origin;
-  for (var i = 0; i < origins.length; i++) {
-      origin = origins[i]
-      if (req.headers.origin.indexOf(origin) > -1){
-          res.header("Access-Control-Allow-Origin", origin);
-          break;
-      }
-  }
-  res.header("Access-Control-Allow-Methods", "GET");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
+	if (req.headers.origin) {
+		// can only set one allowed origin per response, therefore
+		// check to see if origin of request is in origins list and
+		// set header if so
+		var origin;
+		for (var i = 0; i < origins.length; i++) {
+		  origin = origins[i]
+		  if (req.headers.origin.indexOf(origin) > -1){
+			  res.header("Access-Control-Allow-Origin", origin);
+			  break;
+		  }
+		}
+		res.header("Access-Control-Allow-Methods", "GET");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	}
+	next();
 });
 
 // Set port number
