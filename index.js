@@ -145,7 +145,7 @@ app.get('/accessToken', function(request, response) {
     sess = sessions[sessionId]
     if (!sess) {
     	response.status(403);
-        response.send('Session expired');
+        response.send('Session not found');
     }
     requestToken = sess.requestToken;
     requestTokenSecret = sess.requestTokenSecret;
