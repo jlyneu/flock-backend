@@ -4,7 +4,8 @@ var uuid = require('node-uuid');
 
 // List of allowed origins
 var origins = ["http://www.northeastern.edu",
-    "http://localhost:63342", 
+    "http://localhost:63342",
+    "http://localhost:9876",
     "http://localhost:8000", 
     "http://zachbachiri.com"];
     
@@ -186,7 +187,9 @@ app.get('/tweets', function(request, response) {
 
 	// TODO: Return error if sessionId not included in request
     var sessionId = request.query.session_id;
+    console.log('SESSION ID: ' + sessionId);
     var sess = sessions[sessionId];
+    console.log(sess);
     if (!sess){
         response.status(403);
         response.send('Session expired');
