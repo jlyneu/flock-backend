@@ -208,7 +208,7 @@ app.get('/accessToken', function(request, response) {
     console.log(sessions);
     console.log(sessionId);
     sess = sessions[sessionId]
-    if (!sess) {
+    if (!sess || typeof sess === "undefined") {
         response.status(403);
         response.send('Session not found');
     }
