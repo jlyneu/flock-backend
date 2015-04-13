@@ -35,36 +35,43 @@ sessions[flockGuestSessionId] = {
 
 // Set Cross Origin Resource Sharing headers 
 app.use(function(req, res, next) {
-	if (req.headers.origin) {
-		// can only set one allowed origin per response, therefore
-		// check to see if origin of request is in origins list and
-		// set header if so
-		var origin;
-		for (var i = 0; i < origins.length; i++) {
-		  origin = origins[i]
-		  if (req.headers.origin.indexOf(origin) > -1){
-			  res.header("Access-Control-Allow-Origin", origin);
-			  break;
-		  }
-		}
-		res.header("Access-Control-Allow-Methods", "GET");
-		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-	}
-	next();
+    if (req.headers.origin) {
+        // can only set one allowed origin per response, therefore
+        // check to see if origin of request is in origins list and
+        // set header if so
+        var origin;
+        for (var i = 0; i < origins.length; i++) {
+          origin = origins[i]
+          if (req.headers.origin.indexOf(origin) > -1){
+              res.header("Access-Control-Allow-Origin", origin);
+              break;
+          }
+        }
+        res.header("Access-Control-Allow-Methods", "GET");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    }
+    next();
 });
 
 // Set port number
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
 
+// configure node-twitter-api with flock application information
+var twitterAPI = require('node-twitter-api');
+var twitter = new twitterAPI({
+    consumerKey: flockConsumerKey,
+    consumerSecret: flockConsumerSecret,
+    callback: flockRedirectUrl
+});
 
 /*
-	@name:    removeExpiredSessions
-	@author:  Jimmy Ly
-	@created: Mar 28, 2015
-	@purpose: Search for sessions that have expired and remove them from 'sessions' object
-	@return:  void
-	@modhist:
+    @name:    removeExpiredSessions
+    @author:  Jimmy Ly
+    @created: Mar 28, 2015
+    @purpose: Search for sessions that have expired and remove them from 'sessions' object
+    @return:  void
+    @modhist:
 */
 var removeExpiredSessions = function(){
     var session;
@@ -81,18 +88,28 @@ var removeExpiredSessions = function(){
     }
 }
 
-// configure node-twitter-api with flock application information
-var twitterAPI = require('node-twitter-api');
-var twitter = new twitterAPI({
-    consumerKey: flockConsumerKey,
-    consumerSecret: flockConsumerSecret,
-    callback: flockRedirectUrl
-});
-
+/*
+    @name:    GET /checkSession
+    @author:  Jimmy Ly
+    @created: Mar 28, 2015
+    @purpose: Check if the given session id is valid (not Guest id, not expired, and has accessToken)
+    @param:   request - parameters/headers passed in with request
+    @param:   response - parameters/headers sent to requester
+    @return:  "session found" if the given id is valid and "session not found" otherwise
+    @modhist:
+*/
 app.get('/checkSession', function(request, response) {
+
+    // retrieve the session id from the incoming request object
     var sessionId = request.query.session_id;
+    
     console.log(request.query.session_id);
     console.log(sessions);
+    
+    // remove any expired sessions from the sessions object
+    removeExpiredSessions();
+    
+    // send a response to the user based on whether or not the sessionId is valid
     if (sessions[sessionId] && sessionId != flockGuestSessionId && sessions[sessionId].hasOwnProperty('accessToken')){
         response.send("session found");
     } else {
@@ -100,19 +117,39 @@ app.get('/checkSession', function(request, response) {
     }
 });
 
-// Make a call to Twitter to get a request token and token secret for the user
-// that is logging into Flock. Generate a session Id for the user and return
-// both the session Id and the Twitter sign in page Url
+/*
+    @name:    GET /requestToken
+    @author:  Jimmy Ly
+    @created: Mar 28, 2015
+    @purpose: obtain a requestToken and requestTokenSecret from the Twitter API
+              to return to the user. create a new session id for the user and 
+              also store the information in the sessions object
+    @param:   request - parameters/headers passed in with request
+    @param:   response - parameters/headers sent to requester
+    @error:   sends a 502 error if call to the Twitter API fails
+    @return:  the newly created sessionId and the Twitter sign-in url based on the
+              request tokens obtained
+    @modhist:
+*/
 app.get('/requestToken', function(request, response) {
     twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results) {
+    
+        // return an error to the user if the Twitter call fails
         if (error) {
             console.log("Error getting OAuth request token : " + error);
             console.log(error);
             response.status(502);
             response.send("Twitter request token call failed");
         } else {
+            // generate a new session id
             var sessionId = uuid.v4();
+            // keep generating new ids until one is found that is not in use
+            while (sessions[sessionId]) {
+                sessionId = uuid.v4();
+            }
+            
             var currDate = new Date();
+            // add the session information to the sessions object
             sessions[sessionId] = {
                                       requestToken: requestToken,
                                       requestTokenSecret: requestTokenSecret,
@@ -121,12 +158,23 @@ app.get('/requestToken', function(request, response) {
             console.log(requestToken);
             console.log(requestTokenSecret);
             console.log(results);
-            //store token and tokenSecret somewhere, you'll need them later; redirect user
+            // send both the session id and the Twitter sign-in url to the user
             response.send([sessionId, twitter.getAuthUrl(requestToken)]);
         }
     });
 });
 
+/*
+    @name:    GET /guestSession
+    @author:  Jimmy Ly
+    @created: Mar 28, 2015
+    @purpose: provide the user with information necessary to use the default
+              Guest profile for authentication with the Twitter API
+    @param:   request - parameters/headers passed in with request
+    @param:   response - parameters/headers sent to requester
+    @return:  default Guest session id, screen name, and profile image url
+    @modhist:
+*/
 app.get('/guestSession', function(request, response) {
     var guestData = {
                         sessionId: flockGuestSessionId,
@@ -137,6 +185,20 @@ app.get('/guestSession', function(request, response) {
     
 });
 
+/*
+    @name:    GET /accessToken
+    @author:  Jimmy Ly
+    @created: Mar 28, 2015
+    @purpose: retrieve an access token and access token secret from the Twitter
+              API for the user based on the sessionId found in the request object.
+              also verify the access token to obtain user information
+    @param:   request - parameters/headers passed in with request
+    @param:   response - parameters/headers sent to requester
+    @error:   send 403 error if session not found or access token verification fails
+              send 502 if Twitter fails to return an access token
+    @return:  user's Twitter screen name and profile image url
+    @modhist:
+*/
 app.get('/accessToken', function(request, response) {
     var sessionId = request.query.session_id;
     var oauth_token = request.query.oauth_token;
@@ -145,7 +207,7 @@ app.get('/accessToken', function(request, response) {
     console.log(sessionId);
     sess = sessions[sessionId]
     if (!sess) {
-    	response.status(403);
+        response.status(403);
         response.send('Session not found');
     }
     requestToken = sess.requestToken;
@@ -153,20 +215,23 @@ app.get('/accessToken', function(request, response) {
     console.log('requestToken from sess: ' + requestToken);
     console.log('requestTokenSecret from sess: ' + requestTokenSecret);
     
+    // using request token from session object and oauth params from user, get acces token and secret
     twitter.getAccessToken(requestToken, requestTokenSecret, oauth_verifier, function(error, accessToken, accessTokenSecret, results) {
         if (error) {
+            console.log("Error getting access token : " + error);
             console.log(error);
+            response.status(502);
+            response.send("Twitter access token call failed");
         } else {
-            //store accessToken and accessTokenSecret somewhere (associated to the user)
-            //Step 4: Verify Credentials belongs here
+            // verify the credentials with the access token and secret to obtain user information
             twitter.verifyCredentials(accessToken, accessTokenSecret, function(error, data, result) {
                 if (error) {
-                    //something was wrong with either accessToken or accessTokenSecret
-                    //start over with Step 1
+                    response.status(403);
+                    response.send('Verification of access tokens failed');
                 } else {
                     //accessToken and accessTokenSecret can now be used to make api-calls (not yet implemented)
                     //data contains the user-data described in the official Twitter-API-docs
-                    //you could e.g. display his screen_name
+                    //you could e.g. display his/her screen_name
                     console.log('accessToken: ' + accessToken);
                     console.log('accessTokenSecret: ' + accessTokenSecret);
                     sess.accessToken = accessToken;
@@ -183,13 +248,25 @@ app.get('/accessToken', function(request, response) {
     });
 });
 
+/*
+    @name:    GET /tweets
+    @author:  Jimmy Ly
+    @created: Mar 28, 2015
+    @purpose: Use the given query parameters to retrieve tweets from Twitter's
+              REST API for the user determined by the given session id in the
+              request object.
+    @param:   request - parameters/headers passed in with request
+    @param:   response - parameters/headers sent to requester
+    @error:   send 403 error if session not found
+    @return:  Twitter response containing tweet results, metadata and rate limit information
+    @modhist:
+*/
 app.get('/tweets', function(request, response) {
-
-	// TODO: Return error if sessionId not included in request
     var sessionId = request.query.session_id;
     console.log('SESSION ID: ' + sessionId);
     var sess = sessions[sessionId];
     console.log(sess);
+    // if the session is not found then send the user back an error
     if (!sess){
         response.status(403);
         response.send('Session expired');
@@ -200,6 +277,8 @@ app.get('/tweets', function(request, response) {
     console.log(sess.accessToken);
     console.log(sess.accessTokenSecret);
     
+    // query the Twitter API to tweets based on the given search params using
+    // the access token and token secret of the user
     twitter.search(request.query, 
         sess.accessToken,
         sess.accessTokenSecret,
@@ -207,13 +286,13 @@ app.get('/tweets', function(request, response) {
             console.log('TWITTERRESPONSE');
             console.log(twitterResponse.headers);
             var headers = twitterResponse.headers;
+            // collect rate limit information - remaining searches and time before limit reset
             data.rate_limit = headers['x-rate-limit-limit'];
             data.rate_limit_remaining = headers['x-rate-limit-remaining'];
             data.rate_limit_reset = headers['x-rate-limit-reset'];
-            // TODO: return appropriate error if call fails
             console.log(data.rate_limit);
             response.send(data);
-    	}
+        }
     );
 });
 

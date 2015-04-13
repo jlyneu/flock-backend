@@ -4,7 +4,7 @@
   "description": "A sample Node.js app using Express 4",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "test": "make test"
   },
   "dependencies": {
     "express": "~4.9.x",
@@ -29,8 +29,5 @@
     "mocha": "^2.2.1",
     "should": "^5.2.0",
     "supertest": "^0.15.0"
-  },
-  "scripts": {
-    "test":"make test"
   }
 }
