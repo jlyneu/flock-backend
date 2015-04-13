@@ -77,8 +77,10 @@ var removeExpiredSessions = function(){
     var session;
     // get current date and time to determine if a session has expired
     var currDate = new Date();
+    console.log('REMOVINGEXPIREDSESSIONS');
+    console.log(sessions);
     for (var sessId in sessions){
-        if (sessions.hasOwnProperty(sessId)){
+        if (sessions[sessId]){
             var sess = sessions.sessId;
             // delete session object if expireDate has already past
             if (sess.hasOwnProperty('expireDate') && sess.expireDate - currDate < 0){
