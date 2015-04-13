@@ -80,7 +80,7 @@ var removeExpiredSessions = function(){
     console.log('REMOVINGEXPIREDSESSIONS');
     console.log(sessions);
     for (var sessId in sessions){
-        if (sessions[sessId]){
+        if (sessions.sessId){
             var sess = sessions.sessId;
             // delete session object if expireDate has already past
             if (sess['expireDate'] && sess.expireDate - currDate < 0){
