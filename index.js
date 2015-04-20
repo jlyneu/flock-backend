@@ -136,8 +136,8 @@ app.get('/accessToken', function(request, response) {
     var oauth_verifier = request.query.oauth_verifier;
     requestToken = decrypt(request.query.requestToken);
     requestTokenSecret = decrypt(request.query.requestTokenSecret);
-    console.log('requestToken from sess: ' + requestToken);
-    console.log('requestTokenSecret from sess: ' + requestTokenSecret);
+    console.log('requestToken for GET /accessToken: ' + requestToken);
+    console.log('requestTokenSecret for GET /accessToken: ' + requestTokenSecret);
     
     // using request token from session object and oauth params from user, get access token and secret from Twitter
     twitter.getAccessToken(requestToken, requestTokenSecret, oauth_verifier, function(error, accessToken, accessTokenSecret, results) {
