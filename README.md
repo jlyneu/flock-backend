@@ -1,8 +1,6 @@
-# node-js-getting-started
+# Flock Backend
 
-A barebones Node.js app using [Express 4](http://expressjs.com/).
-
-This application support the [Getting Started with Node on Heroku](https://devcenter.heroku.com/articles/getting-started-with-nodejs) article - check it out.
+A backend Node.js app using [Express 4](http://expressjs.com/).
 
 ## Running Locally
 
@@ -34,3 +32,10 @@ For more information about using Node.js on Heroku, see these Dev Center article
 - [Node.js on Heroku](https://devcenter.heroku.com/categories/nodejs)
 - [Best Practices for Node.js Development](https://devcenter.heroku.com/articles/node-best-practices)
 - [Using WebSockets on Heroku with Node.js](https://devcenter.heroku.com/articles/node-websockets)
+
+## Files
+- Index.js : Main code file handling the REST calls for authentication and making requests to the Twitter REST API
+- makefile : Configures 'make test' command to run testsj
+- node_modules : Contains dependencies for the Flock backend
+- package.json : Describes dependencies for the Flock backend
+- test/flockBackendSpec.js : Unit tests for the Flock backend

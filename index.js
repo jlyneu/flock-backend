@@ -1,6 +1,7 @@
 var express = require('express');
-var app = express();
+var crypto = require('crypto');
 var uuid = require('node-uuid');
+var app = express();
 
 // List of allowed origins
 var origins = ["http://www.northeastern.edu",
@@ -8,6 +9,10 @@ var origins = ["http://www.northeastern.edu",
     "http://localhost:9876",
     "http://localhost:8000", 
     "http://zachbachiri.com"];
+    
+// Encryption information for cookies
+var algorithm = 'aes192';
+var hashSecret = 'b3riF2ofjA4t3FgjEG';
     
 // Flock application information
 var flockConsumerKey = 'pEaf5TgKTpz0Tf1M9uyqZSysQ';
@@ -20,18 +25,6 @@ var flockAccessSecret = 'ndsckIxbSpvDuTZGdmzP4pGac6fsBjfQAVkL5EoTzpd3M';
 // URL to redirect user from Twitter sign in page
 //var flockRedirectUrl = 'http://zachbachiri.com/Flock/#/redirect';
 var flockRedirectUrl = 'http://www.northeastern.edu/flock/#/redirect';
-
-// Default Guest session Id
-var flockGuestSessionId = '4cbd71d5-4594-4f53-950b-d27941afe77d';
-
-// Object to hold all session information
-var sessions = {}
-
-// Create default guest session object
-sessions[flockGuestSessionId] = {
-                                    accessToken: flockAccessToken,
-                                    accessTokenSecret: flockAccessSecret
-                                };
 
 // Set Cross Origin Resource Sharing headers 
 app.use(function(req, res, next) {
@@ -66,60 +59,6 @@ var twitter = new twitterAPI({
 });
 
 /*
-    @name:    removeExpiredSessions
-    @author:  Jimmy Ly
-    @created: Mar 28, 2015
-    @purpose: Search for sessions that have expired and remove them from 'sessions' object
-    @return:  void
-    @modhist:
-*/
-var removeExpiredSessions = function(){
-    var session;
-    // get current date and time to determine if a session has expired
-    var currDate = new Date();
-    console.log('REMOVINGEXPIREDSESSIONS');
-    console.log(sessions);
-    for (var sessId in sessions){
-        if (sessions.sessId){
-            var sess = sessions.sessId;
-            // delete session object if expireDate has already past
-            if (sess['expireDate'] && sess.expireDate - currDate < 0){
-                delete sessions.sessId;
-            }
-        }
-    }
-}
-
-/*
-    @name:    GET /checkSession
-    @author:  Jimmy Ly
-    @created: Mar 28, 2015
-    @purpose: Check if the given session id is valid (not Guest id, not expired, and has accessToken)
-    @param:   request - parameters/headers passed in with request
-    @param:   response - parameters/headers sent to requester
-    @return:  "session found" if the given id is valid and "session not found" otherwise
-    @modhist:
-*/
-app.get('/checkSession', function(request, response) {
-
-    // retrieve the session id from the incoming request object
-    var sessionId = request.query.session_id;
-    
-    console.log(request.query.session_id);
-    console.log(sessions);
-    
-    // remove any expired sessions from the sessions object
-    removeExpiredSessions();
-    
-    // send a response to the user based on whether or not the sessionId is valid
-    if (sessions[sessionId] && sessionId != flockGuestSessionId && sessions[sessionId].hasOwnProperty('accessToken')){
-        response.send("session found");
-    } else {
-        response.send("session not found");
-    }
-});
-
-/*
     @name:    GET /requestToken
     @author:  Jimmy Ly
     @created: Mar 28, 2015
@@ -129,9 +68,10 @@ app.get('/checkSession', function(request, response) {
     @param:   request - parameters/headers passed in with request
     @param:   response - parameters/headers sent to requester
     @error:   sends a 502 error if call to the Twitter API fails
-    @return:  the newly created sessionId and the Twitter sign-in url based on the
+    @return:  encrypted request token and secret the Twitter sign-in url based on the
               request tokens obtained
-    @modhist:
+    @modhist: Apr 17 2015 : Jimmy Ly : Removed sessions and return encrypted request
+                                       token and secret to user with Twitter sign-in url
 */
 app.get('/requestToken', function(request, response) {
     twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results) {
@@ -143,25 +83,11 @@ app.get('/requestToken', function(request, response) {
             response.status(502);
             response.send("Twitter request token call failed");
         } else {
-            // generate a new session id
-            var sessionId = uuid.v4();
-            // keep generating new ids until one is found that is not in use
-            while (sessions[sessionId]) {
-                sessionId = uuid.v4();
-            }
-            
-            var currDate = new Date();
-            // add the session information to the sessions object
-            sessions[sessionId] = {
-                                      requestToken: requestToken,
-                                      requestTokenSecret: requestTokenSecret,
-                                      expireDate: currDate.setDate(currDate.getDate() + 1)
-                                  };
-            console.log(requestToken);
-            console.log(requestTokenSecret);
+            console.log('requestToken: ' + requestToken);
+            console.log('requestTokenSecret: ' + requestTokenSecret);
             console.log(results);
-            // send both the session id and the Twitter sign-in url to the user
-            response.send([sessionId, twitter.getAuthUrl(requestToken)]);
+            // send encrypted request token, encrypted request secret, and the Twitter sign-in url to the user
+            response.send([encrypt(requestToken), encrypt(requestTokenSecret), twitter.getAuthUrl(requestToken)]);
         }
     });
 });
@@ -174,12 +100,14 @@ app.get('/requestToken', function(request, response) {
               Guest profile for authentication with the Twitter API
     @param:   request - parameters/headers passed in with request
     @param:   response - parameters/headers sent to requester
-    @return:  default Guest session id, screen name, and profile image url
-    @modhist:
+    @return:  encrypted default Guest access token and secret, screen name, and profile image url
+    @modhist: Apr 17 2015 : Jimmy Ly : Remove sessionId from guestData and replace
+                                       with encrypted Guest access token and secret
 */
 app.get('/guestSession', function(request, response) {
     var guestData = {
-                        sessionId: flockGuestSessionId,
+                        accessToken: encrypt(flockAccessToken),
+                        accessTokenSecret: encrypt(flockAccessSecret),
                         screen_name: 'Guest',
                         profile_image_url: 'http://abs.twimg.com/sticky/default_profile_images/default_profile_2_normal.png'
                     }
@@ -192,32 +120,26 @@ app.get('/guestSession', function(request, response) {
     @author:  Jimmy Ly
     @created: Mar 28, 2015
     @purpose: retrieve an access token and access token secret from the Twitter
-              API for the user based on the sessionId found in the request object.
+              API for the user based on the request object.
               also verify the access token to obtain user information
     @param:   request - parameters/headers passed in with request
     @param:   response - parameters/headers sent to requester
     @error:   send 403 error if session not found or access token verification fails
               send 502 if Twitter fails to return an access token
     @return:  user's Twitter screen name and profile image url
-    @modhist:
+    @modhist: Apr 17 2015 : Jimmy Ly : Remove sessions, get encrypted request token and secret
+                                       from request object, and send encrypted access
+                                       token and secret to user
 */
 app.get('/accessToken', function(request, response) {
-    var sessionId = request.query.session_id;
     var oauth_token = request.query.oauth_token;
     var oauth_verifier = request.query.oauth_verifier;
-    console.log(sessions);
-    console.log(sessionId);
-    sess = sessions[sessionId]
-    if (!sess || typeof sess === "undefined") {
-        response.status(403);
-        response.send('Session not found');
-    }
-    requestToken = sess.requestToken;
-    requestTokenSecret = sess.requestTokenSecret;
+    requestToken = decrypt(request.query.requestToken);
+    requestTokenSecret = decrypt(request.query.requestTokenSecret);
     console.log('requestToken from sess: ' + requestToken);
     console.log('requestTokenSecret from sess: ' + requestTokenSecret);
     
-    // using request token from session object and oauth params from user, get acces token and secret
+    // using request token from session object and oauth params from user, get access token and secret from Twitter
     twitter.getAccessToken(requestToken, requestTokenSecret, oauth_verifier, function(error, accessToken, accessTokenSecret, results) {
         if (error) {
             console.log("Error getting access token : " + error);
@@ -236,10 +158,9 @@ app.get('/accessToken', function(request, response) {
                     //you could e.g. display his/her screen_name
                     console.log('accessToken: ' + accessToken);
                     console.log('accessTokenSecret: ' + accessTokenSecret);
-                    sess.accessToken = accessToken;
-                    sess.accessTokenSecret = accessTokenSecret;
-                    console.log('access token and secret set');
                     var user_info = {
+                                        accessToken: encrypt(accessToken),
+                                        accessTokenSecret: encrypt(accessTokenSecret),
                                         screen_name: data.screen_name,
                                         profile_image_url: data.profile_image_url
                                     }
@@ -264,26 +185,19 @@ app.get('/accessToken', function(request, response) {
     @modhist:
 */
 app.get('/tweets', function(request, response) {
-    var sessionId = request.query.session_id;
-    console.log('SESSION ID: ' + sessionId);
-    var sess = sessions[sessionId];
-    console.log(sess);
-    // if the session is not found then send the user back an error
-    if (!sess){
-        response.status(403);
-        response.send('Session expired');
-    }
-    delete request.query.session_id;
-    console.log('User session id: ' + sessionId);
-    console.log(request.query);
-    console.log(sess.accessToken);
-    console.log(sess.accessTokenSecret);
+    // get encrypted accessToken and accessTokenSecret from request object.
+    // decrypt and delete from request.query since we won't pass as query parameters
+    // for Twitter call
+    var accessToken = decrypt(request.query.accessToken);
+    delete request.query.accessToken;
+    var accessTokenSecret = decrypt(request.query.accessTokenSecret);
+    delete request.query.accessTokenSecret;
     
     // query the Twitter API to tweets based on the given search params using
     // the access token and token secret of the user
     twitter.search(request.query, 
-        sess.accessToken,
-        sess.accessTokenSecret,
+        accessToken,
+        accessTokenSecret,
         function(error, data, twitterResponse){
             console.log('TWITTERRESPONSE');
             console.log(twitterResponse.headers);
@@ -297,6 +211,32 @@ app.get('/tweets', function(request, response) {
         }
     );
 });
+
+/*
+    @name:    encrypt
+    @author:  Jimmy Ly
+    @created: Apr 19, 2015
+    @purpose: Encrypt the given String using the crypto.js library
+    @param:   text - String message to be encrypted
+    @return:  Encrypted String based on AES192 algorithm and specified hash secret key
+*/
+var encrypt = function(text){
+    var cipher = crypto.createCipher(algorithm, hashSecret);
+    return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
+}
+
+/*
+    @name:    decrypt
+    @author:  Jimmy Ly
+    @created: Apr 19, 2015
+    @purpose: Decrypt the given String using the crypto.js library
+    @param:   text - String message to be decrypted
+    @return:  Decrypted String based on AES192 algorithm and specified hash secret key
+*/
+var decrypt = function(text){
+    var decipher = crypto.createDecipher(algorithm, hashSecret);
+    return decipher.update(text, 'hex', 'utf8') + decipher.final('utf8');
+}
 
 app.listen(app.get('port'), function() {
   console.log("Node app is running at localhost:" + app.get('port'));
