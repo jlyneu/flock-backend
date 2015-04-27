@@ -9,8 +9,7 @@
   "dependencies": {
     "crypto": "0.0.3",
     "express": "~4.9.x",
-    "node-twitter-api": "^1.5.0",
-    "node-uuid": "^1.4.3"
+    "node-twitter-api": "^1.5.0"
   },
   "engines": {
     "node": "0.10.x"

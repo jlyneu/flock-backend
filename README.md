@@ -35,7 +35,7 @@ For more information about using Node.js on Heroku, see these Dev Center article
 
 ## Files
 - Index.js : Main code file handling the REST calls for authentication and making requests to the Twitter REST API
-- makefile : Configures 'make test' command to run testsj
+- makefile : Configures 'make test' command to run tests
 - node_modules : Contains dependencies for the Flock backend
 - package.json : Describes dependencies for the Flock backend
 - test/flockBackendSpec.js : Unit tests for the Flock backend

@@ -63,8 +63,7 @@ var twitter = new twitterAPI({
     @author:  Jimmy Ly
     @created: Mar 28, 2015
     @purpose: obtain a requestToken and requestTokenSecret from the Twitter API
-              to return to the user. create a new session id for the user and 
-              also store the information in the sessions object
+              to return to the user.
     @param:   request - parameters/headers passed in with request
     @param:   response - parameters/headers sent to requester
     @error:   sends a 502 error if call to the Twitter API fails
@@ -176,8 +175,7 @@ app.get('/accessToken', function(request, response) {
     @author:  Jimmy Ly
     @created: Mar 28, 2015
     @purpose: Use the given query parameters to retrieve tweets from Twitter's
-              REST API for the user determined by the given session id in the
-              request object.
+              REST API for the user.
     @param:   request - parameters/headers passed in with request
     @param:   response - parameters/headers sent to requester
     @error:   send 403 error if session not found
